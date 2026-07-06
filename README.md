@@ -43,18 +43,15 @@ cargo run
 ### Contoh Output
 
 ```
-Mengaktifkan fungsi CPU, RAM, dan Uptime...
-Mohon tunggu 200 ms untuk menghitung...
-CPU Usage saat ini: 12.34%
-
-Total RAM: 15.54 GB
-RAM Terpakai: 8.21 GB
-RAM Tersisa: 7.33 GB
-Persentase RAM Terpakai: 52.83%
-
-Uptime: 234.56 menit
-Uptime: 3.91 jam
-Uptime: 0.16 hari
+╔════════════════════════════════╗
+║          🖥️  SYSPEEK           ║
+╠════════════════════════════════╣
+║ CPU Usage     : 15.19%         ║
+║ Total RAM     : 9.63 GB        ║
+║ Terpakai      : 5.43 GB        ║
+║ Tersisa       : 4.21 GB        ║
+║ Uptime        : 0.53 jam       ║
+╚════════════════════════════════╝
 ```
 
 ## Penjelasan Kode
