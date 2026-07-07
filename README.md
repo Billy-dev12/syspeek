@@ -1,119 +1,179 @@
-# SysPeek
+# SysPeek 🖥️
 
-Program sederhana untuk memantau sistem Linux menggunakan Rust. Program ini membaca data langsung dari file `/proc/` di Linux untuk menampilkan informasi CPU, RAM, dan Uptime.
+Tool CLI interaktif untuk memantau sistem Linux, dibuat dengan Rust.
+
+Baca data langsung dari `/proc/` dan `/sys/` di Linux, tampil dalam kotak berwarna dengan menu navigasi pakai arrow key.
 
 ## Fitur
 
-| Fungsi | File Sumber | Apa yang dilakukan |
-|--------|-------------|---------------------|
-| CPU | `/proc/stat` | Menghitung persentase penggunaan CPU |
-| RAM | `/proc/meminfo` | Menampilkan total, terpakai, dan tersisa RAM (dalam GB) |
-| Uptime | `/proc/uptime` | Menampilkan waktu aktif sistem (menit, jam, hari) |
+| Kategori | Modul | File Sumber | Apa yang ditampilkan |
+|----------|-------|-------------|----------------------|
+| CPU | `proc/cpu` | `/proc/stat` | Persentase penggunaan CPU |
+| RAM | `proc/ram` | `/proc/meminfo` | Total, terpakai, tersisa (GB) |
+| Uptime | `proc/uptime` | `/proc/uptime` | Waktu aktif sistem (jam/hari) |
+| Versi Kernel | `proc/version` | `/proc/version` | Nama versi kernel |
+| WiFi | `proc/wireles` | `/proc/net/wireless` | Interface, sinyal, link quality |
+| Baterai | `sys/` | `/sys/class/power_supply/` | *(coming soon)* |
+| Suhu | `sys/` | `/sys/class/thermal/` | *(coming soon)* |
+
+## Demo
+
+```
+$ cargo run
+
+🖥️  SYSPEEK — Pilih kategori:
+> 📁 /proc — CPU, RAM, Uptime
+  📁 /sys  — Baterai, Suhu (coming soon)
+  📁 /proc/net — Jaringan
+  🚪 Keluar
+```
+
+Pilih `/proc` → `/proc/net` → `📶 Wireless`:
+
+```
+╔══════════════════════════════════════════╗
+║              📶 WiFi Info                ║
+╠══════════════════════════════════════════╣
+║ Interface  : wlan0                       ║
+║ Link       : 70%                         ║
+║ Sinyal     : -35 dBm (Sangat Kuat 💪)   ║
+║ Noise      : -256 dBm                    ║
+╚══════════════════════════════════════════╝
+```
 
 ## Struktur Folder
 
 ```
 syspeek/
 ├── Cargo.toml
+├── README.md
 └── src/
-    ├── main.rs              # File utama, memanggil semua fungsi
-    ├── fungsi.rs            # Modul penghubung ke semua sub-modul
-    └── fungsi/
-        ├── cpu.rs           # Logika perhitungan CPU
-        ├── ram.rs           # Logika pembacaan RAM
-        └── uptime.rs        # Logika pembacaan Uptime
+    ├── main.rs                     # Entry point → panggil menu
+    ├── fungsi.rs                   # pub mod proc; pub mod sys;
+    ├── fungsi/
+    │   ├── proc.rs                 # Deklarasi modul /proc/
+    │   ├── proc/
+    │   │   ├── cpu.rs              # Hitung CPU usage
+    │   │   ├── ram.rs              # Baca RAM (GB)
+    │   │   ├── uptime.rs           # Baca uptime
+    │   │   ├── version.rs          # Baca versi kernel
+    │   │   ├── wireles.rs          # Baca WiFi info
+    │   │   └── partisi.rs          # (placeholder)
+    │   └── sys.rs                  # Placeholder untuk /sys/
+    ├── ui.rs                       # pub mod display; pub mod menu;
+    └── ui/
+        ├── display.rs              # Fungsi tampil_box()
+        └── menu.rs                 # Menu interaktif (dialoguer)
 ```
 
-## Cara Menjalankan
+## Cara Pakai
 
 ### Prasyarat
-- Linux (karena membaca file `/proc/`)
-- Rust & Cargo sudah terinstall
+- Linux (karena baca file `/proc/` dan `/sys/`)
+- Rust & Cargo terinstall
 
-### Build & Jalankan
+### Build & Run
 
 ```bash
-# Build project
-cargo build
+# Clone repo
+git clone https://github.com/Billy-dev12/syspeek.git
+cd syspeek
 
-# Jalankan langsung
+# Jalankan
 cargo run
 ```
 
-### Contoh Output
+### Navigasi Menu
+
+| Aksi | Tombol |
+|------|--------|
+| Pilih | `↑` `↓` lalu `Enter` |
+| Kembali | Pilih `⬅️ Kembali` |
+| Keluar | Pilih `🚪 Keluar` |
+
+## Arsitektur
+
+### Flow Program
 
 ```
-╔════════════════════════════════╗
-║          🖥️  SYSPEEK           ║
-╠════════════════════════════════╣
-║ CPU Usage     : 15.19%         ║
-║ Total RAM     : 9.63 GB        ║
-║ Terpakai      : 5.43 GB        ║
-║ Tersisa       : 4.21 GB        ║
-║ Uptime        : 0.53 jam       ║
-╚════════════════════════════════╝
+main()
+  └── ui::menu::jalankan()
+        ├── Menu Utama
+        │   ├── /proc → menu_proc()
+        │   │   ├── CPU   → tampil_box()
+        │   │   ├── RAM   → tampil_box()
+        │   │   ├── Uptime → tampil_box()
+        │   │   ├── Versi → tampil_box()
+        │   │   └── Semua → tampil_box()
+        │   ├── /sys → "Coming Soon"
+        │   ├── /proc/net → menu_jaringan()
+        │   │   └── WiFi → tampil_box()
+        │   └── Keluar → break
+        └── ...
 ```
 
-## Penjelasan Kode
+### Pola Fungsi
 
-### `main.rs`
-File入口 (entry point). Memanggil ketiga fungsi secara berurutan:
+Setiap modul data mengembalikan `Vec<String>`, lalu di-render oleh `display::tampil_box()`:
+
 ```rust
-fungsi::cpu::cpu_proses();
-fungsi::ram::data_ram();
-fungsi::uptime::data_uptime();
+// fungsi/proc/ram.rs
+pub fn data_ram() -> Vec<String> {
+    vec![
+        format!("Total RAM     : {:.2} GB", total_gb),
+        format!("Terpakai      : {:.2} GB", terpakai_gb),
+        format!("Tersisa       : {:.2} GB", available_gb),
+    ]
+}
+
+// ui/menu.rs
+let data = fungsi::proc::ram::data_ram();
+super::display::tampil_box("💾 RAM", data);
 ```
 
-### `fungsi.rs`
-Modul penghubung yang mendeklarasikan semua sub-modul:
-```rust
-pub mod cpu;
-pub mod ram;
-pub mod uptime;
-```
+## Dependencies
 
-### `fungsi/cpu.rs`
-Cara kerja:
-1. Baca `/proc/stat` → ambil data CPU pertama (user, nice, system, idle)
-2. Tidur 200ms
-3. Baca lagi → ambil data CPU kedua
-4. Hitung selisih antara data pertama dan kedua
-5. Rumus: `(1 - (selisih_idle / selisih_total)) × 100`
+| Crate | Versi | Fungsi |
+|-------|-------|--------|
+| `colored` | 2 | Warna output terminal |
+| `dialoguer` | 0.12 | Menu interaktif (arrow key + select) |
 
-### `fungsi/ram.rs`
-Cara kerja:
-1. Baca `/proc/meminfo`
-2. Loop tiap baris, cari baris `MemTotal:` dan `MemAvailable:`
-3. Ambil angkanya (satuan kB), konversi ke GB (bagi 1.048.576)
-4. Hitung terpakai: `total - available`
-5. Hitung persentase: `(terpakai / total) × 100`
+## Konsep Rust yang Dipakai
 
-### `fungsi/uptime.rs`
-Cara kerja:
-1. Baca `/proc/uptime` → ambil angka pertama (detik)
-2. Konversi ke menit, jam, dan hari
+| Konsep | Contoh Penggunaan |
+|--------|-------------------|
+| `std::fs::read_to_string()` | Baca isi file `/proc/` |
+| `split_whitespace()` | Pecah teks jadi array |
+| `parse::<tipe>()` | String → angka |
+| `match` | Cek beberapa kondisi |
+| `Vec<String>` | Return data dinamis |
+| `format!()` | Format string |
+| Module system | `mod`, `pub mod` |
+| `colored` crate | `.cyan()`, `.bold()`, `.green()` |
+| `dialoguer` crate | `Select::with_theme().interact()` |
 
 ## Konversi Satuan
 
 | Dari | Ke | Rumus |
 |------|----|-------|
-| kB | GB | `kB / 1_048_576` (atau `/ 1024 / 1024`) |
-| kB | MB | `kB / 1_024` |
-| Detik | Menit | `detik / 60` |
-| Menit | Jam | `menit / 60` |
-| Jam | Hari | `jam / 24` |
+| kB | GB | `kB / 1_048_576` |
+| dBm | Status | `-50..0` = Kuat, `< -85` = Lemah |
+| Detik | Jam | `detik / 3600` |
 
-## Belajar Dari Project Ini
+## Roadmap
 
-Konsep Rust yang dipakai:
-- **`std::fs::read_to_string`** — membaca isi file
-- **`split_whitespace()`** — memecah teks jadi array per kata
-- **`parse::<tipe>()`** — mengubah string jadi angka
-- **`match`** — mengecek beberapa kondisi sekaligus (mirip switch-case)
-- **`if` / `continue`** — logika percabangan
-- **`for` loop** — mengulang tiap baris
-- **`f64` / `as f64`** — bilangan desimal & type casting
+- [x] CPU monitoring
+- [x] RAM monitoring
+- [x] Uptime display
+- [x] Versi kernel
+- [x] WiFi info
+- [x] Menu interaktif
+- [x] Box display dengan warna
+- [ ] Baterai info (`/sys/class/power_supply/`)
+- [ ] Suhu CPU (`/sys/class/thermal/`)
+- [ ] CPU frequency (`/sys/devices/system/cpu/`)
+- [ ] GitHub Actions auto-release
 
 ## License
 
-Projek belajar Rust.
+Projek belajar Rust. Dibuat dengan ❤️ oleh Billy.
