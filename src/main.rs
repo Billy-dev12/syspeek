@@ -5,9 +5,10 @@ fn main() {
     let w: usize = 32;
     let garis = "═".repeat(w);
 
-    let cpu = fungsi::cpu::cpu_proses();
-    let ram_lines = fungsi::ram::data_ram();
-    let uptime = fungsi::uptime::data_uptime();
+    let cpu = fungsi::proc::cpu::cpu_proses();
+    let ram_lines = fungsi::proc::ram::data_ram();
+    let uptime = fungsi::proc::uptime::data_uptime();
+    let version = fungsi::proc::version::data_versi();
 
     println!();
     println!("{}", format!("╔{}╗", garis).cyan());
@@ -18,6 +19,7 @@ fn main() {
         println!("{}", format!("║ {:<width$}║", line, width = w - 1).white());
     }
     println!("{}", format!("║ {:<width$}║", uptime, width = w - 1).white());
+    println!("{}", format!("║ {:<width$}║", version, width = w - 1).white());
     println!("{}", format!("╚{}╝", garis).cyan());
     println!();
 }
