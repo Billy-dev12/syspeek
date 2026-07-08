@@ -2,7 +2,8 @@ use std::fs;
 use std::thread::sleep;
 use std::time::Duration;
 
-pub fn cpu_proses() -> String {
+/// Hitung CPU usage dan return angka persentase (f64)
+pub fn cpu_persen() -> f64 {
     let isi_1 = fs::read_to_string("/proc/stat").unwrap();
     let barisan_1 = isi_1.lines().next().unwrap();
     let bagian_1: Vec<&str> = barisan_1.split_whitespace().collect();
@@ -30,7 +31,7 @@ pub fn cpu_proses() -> String {
     let selisih_total = (total_2 - total_1) as f64;
     let selisih_idle = (idle_2 - idle_1) as f64;
 
-    let persen_cpu = (1.0 - (selisih_idle / selisih_total)) * 100.0;
-
-    format!("CPU Usage     : {:.2}%", persen_cpu)
+    (1.0 - (selisih_idle / selisih_total)) * 100.0
 }
+
+
