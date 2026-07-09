@@ -28,3 +28,38 @@ pub fn tampil_ram() -> Vec<String> {
         format!("Tersisa       : {:.2} GB", total - terpakai),
     ]
 }
+
+/// Tampilan side-by-side: proc (kiri) | sys (kanan)
+pub fn tampil_all_side_by_side() {
+    // Data proc (kiri)
+    let mut kiri: Vec<String> = Vec::new();
+    kiri.push(tampil_cpu());
+    kiri.extend(tampil_ram());
+    kiri.push(crate::fungsi::proc::uptime::data_uptime());
+    kiri.push(crate::fungsi::proc::version::data_versi());
+
+    // Data sys (kanan)
+    let kanan: Vec<String> = crate::fungsi::sys::batre::jalankan_batre();
+
+    // Cari baris terpanjang di kiri
+    let max_kiri = kiri.iter().map(|s| s.len()).max().unwrap_or(0);
+    let lebar_kiri = max_kiri + 2; // tambah padding
+
+    // Gabungkan baris per baris
+    let max_baris = kiri.len().max(kanan.len());
+    for i in 0..max_baris {
+        let kiri_str = if i < kiri.len() {
+            format!("{:<width$}", kiri[i], width = lebar_kiri)
+        } else {
+            " ".repeat(lebar_kiri)
+        };
+
+        let kanan_str = if i < kanan.len() {
+            format!("| {}", kanan[i])
+        } else {
+            String::new()
+        };
+
+        println!("{}{}", kiri_str, kanan_str);
+    }
+}

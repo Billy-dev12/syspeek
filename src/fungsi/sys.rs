@@ -1,4 +1,4 @@
-// TODO: Tambahkan modul-modul /sys/ di sini
+pub mod batre;
 // Contoh:
 // pub mod baterai;
 // pub mod suhu;

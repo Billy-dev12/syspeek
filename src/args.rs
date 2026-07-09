@@ -53,15 +53,16 @@ pub fn jalankan() {
 }
 
 fn command_valid(command: Option<&str>) -> bool {
-    matches!(command, Some("cpu") | Some("ram") | Some("uptime") | Some("version") | Some("wireless") | Some("all") | Some("help") | None)
+    matches!(command, Some("cpu") | Some("ram") | Some("uptime") | Some("version") | Some("wireless") | Some("battery") | Some("all") | Some("help") | None)
 }
 
 fn hitung_baris(command: Option<&str>) -> usize {
     match command {
         Some("cpu") | Some("uptime") | Some("version") => 1,
         Some("ram") => 3,
-        Some("wireless") => 4,  // Interface, Link, Sinyal, Noise
-        Some("all") => 7, // cpu(1) + ram(3) + uptime(1) + version(1) + wireless(4) - 2 (overlap)
+        Some("wireless") => 4,
+        Some("battery") => 4,
+        Some("all") => 6, // max(proc: 6, sys: 4)
         _ => 1,
     }
 }
@@ -87,13 +88,13 @@ fn jalankan_command(command: Option<&str>) {
                 println!("{}", baris);
             }
         }
-        Some("all") => {
-            println!("{}", display::tampil_cpu());
-            for baris in display::tampil_ram() {
+        Some("battery") => {
+            for baris in fungsi::sys::batre::jalankan_batre() {
                 println!("{}", baris);
             }
-            println!("{}", fungsi::proc::uptime::data_uptime());
-            println!("{}", fungsi::proc::version::data_versi());
+        }
+        Some("all") => {
+            display::tampil_all_side_by_side();
         }
         Some("help") | None => tampilkan_help(),
         Some(cmd) => eprintln!("Error: command '{}' tidak dikenal.\n", cmd),
@@ -109,7 +110,8 @@ fn tampilkan_help() {
     println!("  uptime    System uptime");
     println!("  version   Kernel version");
     println!("  wireless  WiFi signal info");
-    println!("  all       Show all info");
+    println!("  battery   Battery information");
+    println!("  all       Show all info (side-by-side)");
     println!("  help      Show this help\n");
     println!("Flags:");
     println!("  --watch   Auto-refresh setiap 2 detik (Ctrl+C untuk keluar)");
